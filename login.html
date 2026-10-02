@@ -92,19 +92,107 @@
 
 <script>
 
-/* =========================================
-   GOOGLE REDIRECT RESULT
-========================================= */
+/* ================================
+   CHECK GOOGLE LOGIN RETURN
+================================ */
 
-(async function handleGoogleReturn() {
+let redirectHandled = false;
+
+window.fbAuth.onAuthStateChanged(async function(firebaseUser) {
+
+  if (!firebaseUser || redirectHandled) {
+    return;
+  }
+
+  redirectHandled = true;
 
   try {
 
-    const user = await window.handleGoogleRedirect();
+    let user = null;
+
+    /*
+      First try to get the Google redirect result.
+    */
+
+    try {
+      user = await window.handleGoogleRedirect();
+    } catch (error) {
+      console.log("Redirect result check:", error);
+    }
+
+    /*
+      If redirect result is already consumed,
+      use the currently authenticated Firebase user.
+    */
 
     if (!user) {
+
+      const currentUser = window.fbAuth.currentUser;
+
+      if (currentUser) {
+
+        /*
+          Load/create the CMA Tracker profile.
+        */
+
+        const snap = await window.fbDb
+          .collection("users")
+          .doc(currentUser.uid)
+          .get();
+
+        if (snap.exists) {
+
+          user = {
+            uid: currentUser.uid,
+            ...snap.data()
+          };
+
+        } else {
+
+          /*
+            Google account authenticated,
+            but CMA Tracker profile doesn't exist yet.
+          */
+
+          user = {
+            uid: currentUser.uid,
+            name: currentUser.displayName || "CMA Student",
+            email: currentUser.email || "",
+            course: null,
+            groups: [],
+            attempt: null,
+            dailyHours: 4,
+            preferredTime: "Morning",
+            weeklyOff: "Sunday",
+            setup: false,
+            role: "student"
+          };
+
+          await window.fbDb
+            .collection("users")
+            .doc(currentUser.uid)
+            .set({
+              ...user,
+              createdAt:
+                firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        localStorage.setItem(
+          "cmaUser",
+          JSON.stringify(user)
+        );
+      }
+    }
+
+    if (!user) {
+      redirectHandled = false;
       return;
     }
+
+    /*
+      LOGIN SUCCESS
+    */
 
     if (user.setup === true) {
 
@@ -119,23 +207,25 @@
   } catch (error) {
 
     console.error(
-      "Google redirect processing failed:",
+      "Google return handling error:",
       error
     );
 
+    redirectHandled = false;
+
     alert(
       error.message ||
-      "Google login failed."
+      "Unable to complete Google login."
     );
 
   }
 
-})();
+});
 
 
-/* =========================================
-   EMAIL LOGIN
-========================================= */
+/* ================================
+   NORMAL EMAIL LOGIN
+================================ */
 
 document
   .getElementById("loginForm")
@@ -150,46 +240,30 @@ document
     try {
 
       const user = await window.loginCMAUser(
-        document
-          .getElementById("email")
-          .value
-          .trim(),
-
-        document
-          .getElementById("password")
-          .value
+        document.getElementById("email").value.trim(),
+        document.getElementById("password").value
       );
-
 
       if (user.setup === true) {
 
-        window.location.replace(
-          "dashboard.html"
-        );
+        window.location.replace("dashboard.html");
 
       } else {
 
-        window.location.replace(
-          "setup.html"
-        );
+        window.location.replace("setup.html");
 
       }
 
     } catch (error) {
 
-      console.error(
-        "Login error:",
-        error
-      );
+      console.error(error);
 
       if (
         error.code === "auth/invalid-credential" ||
         error.code === "auth/user-not-found"
       ) {
 
-        alert(
-          "Invalid email or password."
-        );
+        alert("Invalid email or password.");
 
       } else {
 
@@ -209,9 +283,9 @@ document
   });
 
 
-/* =========================================
-   GOOGLE LOGIN
-========================================= */
+/* ================================
+   GOOGLE LOGIN BUTTON
+================================ */
 
 document
   .getElementById("googleLogin")
@@ -223,24 +297,11 @@ document
 
     try {
 
-      /*
-        This starts the redirect.
-
-        IMPORTANT:
-        Do NOT wait for a user here.
-        Firebase will return to this page,
-        and handleGoogleReturn() above
-        will process the result.
-      */
-
       await window.startGoogleLogin();
 
     } catch (error) {
 
-      console.error(
-        "Google login start failed:",
-        error
-      );
+      console.error(error);
 
       alert(
         error.message ||
@@ -254,25 +315,20 @@ document
   });
 
 
-/* =========================================
+/* ================================
    FORGOT PASSWORD
-========================================= */
+================================ */
 
 document
   .getElementById("forgot")
   .addEventListener("click", async function() {
 
     const email =
-      document
-        .getElementById("email")
-        .value
-        .trim();
+      document.getElementById("email").value.trim();
 
     if (!email) {
 
-      alert(
-        "Enter your email first."
-      );
+      alert("Enter your email first.");
 
       return;
 
@@ -280,19 +336,11 @@ document
 
     try {
 
-      await window.fbAuth
-        .sendPasswordResetEmail(email);
+      await window.fbAuth.sendPasswordResetEmail(email);
 
-      alert(
-        "Password reset email sent."
-      );
+      alert("Password reset email sent.");
 
     } catch (error) {
-
-      console.error(
-        "Password reset error:",
-        error
-      );
 
       alert(
         error.message ||
@@ -304,6 +352,7 @@ document
   });
 
 </script>
+  
 
 </body>
 </html>
