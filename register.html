@@ -239,24 +239,138 @@
 
 <script src="js/firebase.js"></script>
 
-
 <script>
 
-/* =========================================
-   GOOGLE REDIRECT RESULT
-========================================= */
+/* ================================
+   CHECK GOOGLE LOGIN RETURN
+================================ */
 
-(async function handleGoogleReturn() {
+let redirectHandled = false;
+
+window.fbAuth.onAuthStateChanged(async function(firebaseUser) {
+
+  if (!firebaseUser || redirectHandled) {
+    return;
+  }
+
+  redirectHandled = true;
 
   try {
 
-    const user =
-      await window.handleGoogleRedirect();
+    let user = null;
 
-    if (!user) {
-      return;
+    /*
+      Try Firebase redirect result first.
+    */
+
+    try {
+      user = await window.handleGoogleRedirect();
+    } catch (error) {
+      console.log("Redirect result check:", error);
     }
 
+
+    /*
+      If result is already consumed,
+      use the authenticated Firebase user.
+    */
+
+    if (!user) {
+
+      const currentUser =
+        window.fbAuth.currentUser;
+
+      if (currentUser) {
+
+        const snap = await window.fbDb
+          .collection("users")
+          .doc(currentUser.uid)
+          .get();
+
+
+        if (snap.exists) {
+
+          user = {
+            uid: currentUser.uid,
+            ...snap.data()
+          };
+
+        } else {
+
+          /*
+            Create CMA Tracker profile
+            for a new Google account.
+          */
+
+          user = {
+
+            uid: currentUser.uid,
+
+            name:
+              currentUser.displayName ||
+              "CMA Student",
+
+            email:
+              currentUser.email ||
+              "",
+
+            course: null,
+
+            groups: [],
+
+            attempt: null,
+
+            dailyHours: 4,
+
+            preferredTime: "Morning",
+
+            weeklyOff: "Sunday",
+
+            setup: false,
+
+            role: "student"
+
+          };
+
+
+          await window.fbDb
+            .collection("users")
+            .doc(currentUser.uid)
+            .set({
+
+              ...user,
+
+              createdAt:
+                firebase.firestore.FieldValue
+                  .serverTimestamp()
+
+            });
+
+        }
+
+
+        localStorage.setItem(
+          "cmaUser",
+          JSON.stringify(user)
+        );
+
+      }
+
+    }
+
+
+    if (!user) {
+
+      redirectHandled = false;
+
+      return;
+
+    }
+
+
+    /*
+      GOOGLE LOGIN SUCCESS
+    */
 
     if (user.setup === true) {
 
@@ -272,26 +386,29 @@
 
     }
 
+
   } catch (error) {
 
     console.error(
-      "Google redirect processing failed:",
+      "Google return handling error:",
       error
     );
 
+    redirectHandled = false;
+
     alert(
       error.message ||
-      "Google registration failed."
+      "Unable to complete Google registration."
     );
 
   }
 
-})();
+});
 
 
-/* =========================================
+/* ================================
    NORMAL REGISTRATION
-========================================= */
+================================ */
 
 document
   .getElementById("registerForm")
@@ -301,36 +418,21 @@ document
 
 
     const name =
-      document
-        .getElementById("name")
-        .value
-        .trim();
-
+      document.getElementById("name").value.trim();
 
     const email =
-      document
-        .getElementById("email")
-        .value
-        .trim();
-
+      document.getElementById("email").value.trim();
 
     const password =
-      document
-        .getElementById("password")
-        .value;
-
+      document.getElementById("password").value;
 
     const confirm =
-      document
-        .getElementById("confirm")
-        .value;
+      document.getElementById("confirm").value;
 
 
     if (password !== confirm) {
 
-      alert(
-        "Passwords do not match."
-      );
+      alert("Passwords do not match.");
 
       return;
 
@@ -362,10 +464,7 @@ document
 
     } catch (error) {
 
-      console.error(
-        "Registration error:",
-        error
-      );
+      console.error(error);
 
 
       if (
@@ -395,9 +494,9 @@ document
   });
 
 
-/* =========================================
+/* ================================
    GOOGLE REGISTRATION
-========================================= */
+================================ */
 
 document
   .getElementById("googleRegister")
@@ -407,34 +506,18 @@ document
 
     btn.disabled = true;
 
-
     try {
-
-      /*
-        Start Google redirect.
-
-        Firebase will return to this
-        register.html page.
-
-        handleGoogleReturn() at the top
-        will then process the returned user.
-      */
 
       await window.startGoogleLogin();
 
     } catch (error) {
 
-      console.error(
-        "Google registration start failed:",
-        error
-      );
-
+      console.error(error);
 
       alert(
         error.message ||
         "Google registration failed."
       );
-
 
       btn.disabled = false;
 
@@ -442,7 +525,8 @@ document
 
   });
 
-</script>
+        </script>
+
 
 </body>
 </html>
