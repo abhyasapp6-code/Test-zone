@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    match /users/{uid} {
+      allow create: if isOwner(uid);
+      allow read, update, delete: if isOwner(uid) || isAdmin();
+
+      match /topicProgress/{docId} { allow read, write: if isOwner(uid) || isAdmin(); }
+      match /tasks/{docId} { allow read, write: if isOwner(uid) || isAdmin(); }
+      match /classes/{docId} { allow read, write: if isOwner(uid) || isAdmin(); }
+      match /revisions/{docId} { allow read, write: if isOwner(uid) || isAdmin(); }
+      match /practice/{docId} { allow read, write: if isOwner(uid) || isAdmin(); }
+      match /tests/{docId} { allow read, write: if isOwner(uid) || isAdmin(); }
+    }
+
+    match /courses/{courseId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+      match /groups/{groupId} {
+        allow read: if signedIn();
+        allow write: if isAdmin();
+        match /papers/{paperId} {
+          allow read: if signedIn();
+          allow write: if isAdmin();
+          match /chapters/{chapterId} {
+            allow read: if signedIn();
+            allow write: if isAdmin();
+            match /topics/{topicId} {
+              allow read: if signedIn();
+              allow write: if isAdmin();
+            }
+          }
+        }
+      }
+    }
+
+    match /questions/{questionId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
