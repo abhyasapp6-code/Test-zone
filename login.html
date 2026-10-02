@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login — CMA Tracker</title><link rel="stylesheet" href="css/style.css"></head>
+<body class="auth-page"><div class="center-wrap"><div class="card auth-card narrow">
+<a class="brand" href="index.html"><span class="brand-mark">▮▮▮</span> CMA <b>Tracker</b></a>
+<div class="eyebrow">WELCOME BACK</div><h2>Login</h2><p class="muted">Continue your CMA preparation.</p>
+<form id="loginForm"><label>Email<input id="email" type="email" required></label><label>Password<input id="password" type="password" required></label><button class="btn primary full">Login →</button></form>
+<p class="center muted">New here? <a href="register.html">Create an account</a></p></div></div>
+<script>
+document.getElementById("loginForm").addEventListener("submit",e=>{
+e.preventDefault(); let u=JSON.parse(localStorage.getItem("cmaUser")||"null");
+if(!u || u.email!==email.value) return alert("Account not found. Create an account first.");
+location.href=u.setup?"dashboard.html":"setup.html";
+});
+</script></body></html>

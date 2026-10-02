@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Set Up Your CMA Plan</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div class="setup-shell">
+<div class="setup-head"><a class="brand" href="index.html"><span class="brand-mark">▮▮▮</span> CMA <b>Tracker</b></a><span id="stepLabel">1 / 5</span></div>
+<div class="progress-line"><i id="progress"></i></div>
+<main class="setup-card card">
+<section class="step active" data-step="1"><div class="step-icon">🎓</div><h1>Which CMA Course?</h1><p class="muted">Choose the course you are preparing for.</p>
+<div class="choice-grid">
+<button class="choice" data-course="Foundation"><b>CMA Foundation</b><small>4 Papers</small></button>
+<button class="choice" data-course="Inter"><b>CMA Inter</b><small>8 Papers · 2 Groups</small></button>
+<button class="choice" data-course="Final"><b>CMA Final</b><small>8 Papers · 2 Groups</small></button>
+</div></section>
+<section class="step" data-step="2"><div class="step-icon">📚</div><h1>Select Group</h1><p class="muted">You can track one or both groups.</p>
+<div class="choice-grid" id="groupChoices">
+<button class="choice" data-group="Group III"><b>Group III</b><small>4 Papers</small></button>
+<button class="choice" data-group="Group IV"><b>Group IV</b><small>4 Papers</small></button>
+<button class="choice" data-group="Both Groups"><b>Both Groups</b><small>Track Group III + IV</small></button>
+</div></section>
+<section class="step" data-step="3"><div class="step-icon">📅</div><h1>Target Attempt</h1><p class="muted">Which exam attempt are you preparing for?</p>
+<div class="choice-grid" id="attemptChoices">
+<button class="choice" data-attempt="December 2026"><b>December 2026</b><small>Current target</small></button>
+<button class="choice" data-attempt="June 2027"><b>June 2027</b><small>Next attempt</small></button>
+<button class="choice" data-attempt="December 2027"><b>December 2027</b><small>Future attempt</small></button>
+</div></section>
+<section class="step" data-step="4"><div class="step-icon">⏱️</div><h1>Set Your Study Routine</h1><p class="muted">This helps create a realistic daily plan.</p>
+<label>Daily study target <select id="dailyHours"><option value="2">2 hours</option><option value="3">3 hours</option><option value="4" selected>4 hours</option><option value="5">5 hours</option><option value="6">6 hours</option><option value="8">8 hours</option></select></label>
+<label>Preferred study time <select id="preferredTime"><option>Morning</option><option>Afternoon</option><option>Evening</option><option>Night</option></select></label>
+<label>Weekly off <select id="weeklyOff"><option>Sunday</option><option>Sunday + 2nd & 4th Saturday</option><option>Custom</option></select></label>
+</section>
+<section class="step" data-step="5"><div class="step-icon">📈</div><h1>Current Progress</h1><p class="muted">Set a starting status for each paper. You can change it later.</p>
+<div id="paperProgress"></div></section>
+<div class="setup-actions"><button id="back" class="btn secondary">← Back</button><button id="next" class="btn primary">Next →</button></div>
+</main></div>
+<script src="js/data.js"></script><script src="js/setup.js"></script>
+</body></html>

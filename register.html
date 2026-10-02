@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create Account — CMA Tracker</title><link rel="stylesheet" href="css/style.css"></head>
+<body class="auth-page">
+<div class="auth-shell">
+<section class="brand-panel">
+<a class="brand" href="index.html"><span class="brand-mark">▮▮▮</span> CMA <b>Tracker</b></a>
+<p class="tagline">Plan · Study · Practice · Succeed</p>
+<h1>Your complete study companion for CMA Foundation, Inter & Final.</h1>
+<div class="feature-list">
+<div><span>🎯</span><b>Track Your Syllabus</b><small>Topic-wise progress with automatic tracking.</small></div>
+<div><span>📅</span><b>Plan Your Study</b><small>Daily targets, revision schedule and calendar.</small></div>
+<div><span>📊</span><b>Practice & Analyse</b><small>MCQs, PYQs, mock tests and performance.</small></div>
+<div><span>🚀</span><b>Be Exam Ready</b><small>Track your overall preparation.</small></div>
+</div>
+</section>
+<section class="form-panel">
+<div class="card auth-card">
+<div class="eyebrow">CMA STUDY TRACKER</div>
+<h2>Create Your Account</h2>
+<p class="muted">Join CMA Tracker and start your preparation journey.</p>
+<form id="registerForm">
+<label>Full Name<input id="name" required placeholder="Enter your full name"></label>
+<label>Email Address<input id="email" type="email" required placeholder="Enter your email address"></label>
+<label>Password<input id="password" type="password" minlength="6" required placeholder="Create a password"></label>
+<label>Confirm Password<input id="confirm" type="password" minlength="6" required placeholder="Confirm your password"></label>
+<label class="check"><input id="terms" type="checkbox" required> I agree to the Terms & Conditions and Privacy Policy</label>
+<button class="btn primary full" type="submit">Create Account →</button>
+</form>
+<div class="or"><span>OR</span></div>
+<button class="btn google full" type="button" onclick="alert('Google login can be connected to Firebase later.')">🌈 Continue with Google</button>
+<p class="center muted">Already have an account? <a href="login.html">Login</a></p>
+</div>
+</section>
+</div>
+<script>
+document.getElementById("registerForm").addEventListener("submit", e=>{
+ e.preventDefault();
+ if(password.value!==confirm.value) return alert("Passwords do not match.");
+ const user={name:name.value.trim(),email:email.value.trim(),course:null,groups:[],attempt:null,dailyHours:4,preferredTime:"Morning",weeklyOff:"Sunday",setup:false};
+ localStorage.setItem("cmaUser",JSON.stringify(user));
+ location.href="setup.html";
+});
+</script></body></html>

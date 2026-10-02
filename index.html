@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1730">
+<title>CMA Tracker</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script>
+const user = JSON.parse(localStorage.getItem("cmaUser") || "null");
+location.replace(user ? "dashboard.html" : "register.html");
+</script>
+</body>
+</html>
