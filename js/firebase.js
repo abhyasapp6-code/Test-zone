@@ -101,15 +101,13 @@ window.loginCMAUser = async function(email, password) {
   return user;
 };
 
-window.googleCMAUser = async function() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  const credential = await fbAuth.signInWithPopup(provider);
-  let userSnap = await fbDb.collection("users").doc(credential.user.uid).get();
+async function finishGoogleUser(firebaseUser) {
+  let userSnap = await fbDb.collection("users").doc(firebaseUser.uid).get();
   if (!userSnap.exists) {
     const user = {
-      uid: credential.user.uid,
-      name: credential.user.displayName || "CMA Student",
-      email: credential.user.email || "",
+      uid: firebaseUser.uid,
+      name: firebaseUser.displayName || "CMA Student",
+      email: firebaseUser.email || "",
       course: null,
       groups: [],
       attempt: null,
@@ -120,11 +118,30 @@ window.googleCMAUser = async function() {
       role: "student",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    await fbDb.collection("users").doc(credential.user.uid).set(user);
+    await fbDb.collection("users").doc(firebaseUser.uid).set(user);
     cacheUser({ ...user, createdAt: new Date().toISOString() });
     return user;
   }
-  return loadCloudUser(credential.user);
+  return loadCloudUser(firebaseUser);
+}
+
+// Redirect is used instead of popup because mobile browsers and GitHub Pages
+// can block popup windows. This is the more reliable Google-login flow.
+window.startGoogleLogin = async function() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  await fbAuth.signInWithRedirect(provider);
+};
+
+window.handleGoogleRedirect = async function() {
+  const result = await fbAuth.getRedirectResult();
+  if (!result || !result.user) return null;
+  return finishGoogleUser(result.user);
+};
+
+window.googleCMAUser = async function() {
+  // Kept as a compatibility wrapper for existing pages.
+  return startGoogleLogin();
 };
 
 window.logoutCMA = async function() {
