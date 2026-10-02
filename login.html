@@ -1,12 +1,309 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login — CMA Tracker</title><link rel="stylesheet" href="css/style.css"></head><body class="auth-page"><div class="center-wrap"><div class="card auth-card narrow"><a class="brand" href="index.html"><span class="brand-mark">▮▮▮</span> CMA <b>Tracker</b></a><div class="eyebrow">WELCOME BACK</div><h2>Login</h2><p class="muted">Continue your CMA preparation.</p><form id="loginForm"><label>Email<input id="email" type="email" required></label><label>Password<input id="password" type="password" required></label><button class="btn primary full">Login →</button></form><button class="btn google full" id="googleLogin" type="button">🌈 Continue with Google</button><p class="center muted" style="font-size:12px;margin:8px 0 0">Google sign-in will open securely on this page.</p><button class="btn secondary full" id="forgot" type="button">Forgot password?</button><p class="center muted">New here? <a href="register.html">Create an account</a></p></div></div>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login — CMA Tracker</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="auth-page">
+
+<div class="center-wrap">
+  <div class="card auth-card narrow">
+
+    <a class="brand" href="index.html">
+      <span class="brand-mark">▮▮▮</span>
+      CMA <b>Tracker</b>
+    </a>
+
+    <div class="eyebrow">WELCOME BACK</div>
+
+    <h2>Login</h2>
+
+    <p class="muted">
+      Continue your CMA preparation.
+    </p>
+
+    <form id="loginForm">
+
+      <label>
+        Email
+        <input
+          id="email"
+          type="email"
+          required
+        >
+      </label>
+
+      <label>
+        Password
+        <input
+          id="password"
+          type="password"
+          required
+        >
+      </label>
+
+      <button
+        class="btn primary full"
+        type="submit"
+      >
+        Login →
+      </button>
+
+    </form>
+
+    <button
+      class="btn google full"
+      id="googleLogin"
+      type="button"
+    >
+      🌈 Continue with Google
+    </button>
+
+    <button
+      class="btn secondary full"
+      id="forgot"
+      type="button"
+    >
+      Forgot password?
+    </button>
+
+    <p class="center muted">
+      New here?
+      <a href="register.html">Create an account</a>
+    </p>
+
+  </div>
+</div>
+
+
+<!-- Firebase -->
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
 <script src="js/firebase.js"></script>
+
+
 <script>
-document.getElementById("loginForm").addEventListener("submit", async e=>{e.preventDefault(); const btn=e.submitter; btn.disabled=true; try{const u=await loginCMAUser(email.value.trim(),password.value); location.href=u.setup?"dashboard.html":"setup.html";}catch(err){alert(err.code==="auth/invalid-credential"||err.code==="auth/user-not-found"?"Invalid email or password.":err.message||"Login failed.");}finally{btn.disabled=false;}});
-document.getElementById("googleLogin").onclick=async()=>{try{await startGoogleLogin();}catch(err){alert(err.message||"Google login failed.");}};
-handleGoogleRedirect().then(u=>{if(u) location.href=u.setup?"dashboard.html":"setup.html";}).catch(err=>{if(err && err.code) alert(err.message||"Google login failed.");});
-document.getElementById("forgot").onclick=async()=>{const e=email.value.trim();if(!e)return alert("Enter your email first.");try{await fbAuth.sendPasswordResetEmail(e);alert("Password reset email sent.");}catch(err){alert(err.message||"Unable to send reset email.");}};
-</script></body></html>
+
+/* =========================================
+   GOOGLE REDIRECT RESULT
+========================================= */
+
+(async function handleGoogleReturn() {
+
+  try {
+
+    const user = await window.handleGoogleRedirect();
+
+    if (!user) {
+      return;
+    }
+
+    if (user.setup === true) {
+
+      window.location.replace("dashboard.html");
+
+    } else {
+
+      window.location.replace("setup.html");
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Google redirect processing failed:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Google login failed."
+    );
+
+  }
+
+})();
+
+
+/* =========================================
+   EMAIL LOGIN
+========================================= */
+
+document
+  .getElementById("loginForm")
+  .addEventListener("submit", async function(e) {
+
+    e.preventDefault();
+
+    const btn = e.submitter;
+
+    btn.disabled = true;
+
+    try {
+
+      const user = await window.loginCMAUser(
+        document
+          .getElementById("email")
+          .value
+          .trim(),
+
+        document
+          .getElementById("password")
+          .value
+      );
+
+
+      if (user.setup === true) {
+
+        window.location.replace(
+          "dashboard.html"
+        );
+
+      } else {
+
+        window.location.replace(
+          "setup.html"
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+      if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/user-not-found"
+      ) {
+
+        alert(
+          "Invalid email or password."
+        );
+
+      } else {
+
+        alert(
+          error.message ||
+          "Login failed."
+        );
+
+      }
+
+    } finally {
+
+      btn.disabled = false;
+
+    }
+
+  });
+
+
+/* =========================================
+   GOOGLE LOGIN
+========================================= */
+
+document
+  .getElementById("googleLogin")
+  .addEventListener("click", async function() {
+
+    const btn = this;
+
+    btn.disabled = true;
+
+    try {
+
+      /*
+        This starts the redirect.
+
+        IMPORTANT:
+        Do NOT wait for a user here.
+        Firebase will return to this page,
+        and handleGoogleReturn() above
+        will process the result.
+      */
+
+      await window.startGoogleLogin();
+
+    } catch (error) {
+
+      console.error(
+        "Google login start failed:",
+        error
+      );
+
+      alert(
+        error.message ||
+        "Google login failed."
+      );
+
+      btn.disabled = false;
+
+    }
+
+  });
+
+
+/* =========================================
+   FORGOT PASSWORD
+========================================= */
+
+document
+  .getElementById("forgot")
+  .addEventListener("click", async function() {
+
+    const email =
+      document
+        .getElementById("email")
+        .value
+        .trim();
+
+    if (!email) {
+
+      alert(
+        "Enter your email first."
+      );
+
+      return;
+
+    }
+
+    try {
+
+      await window.fbAuth
+        .sendPasswordResetEmail(email);
+
+      alert(
+        "Password reset email sent."
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Password reset error:",
+        error
+      );
+
+      alert(
+        error.message ||
+        "Unable to send reset email."
+      );
+
+    }
+
+  });
+
+</script>
+
+</body>
+</html>
