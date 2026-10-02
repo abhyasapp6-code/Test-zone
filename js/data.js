@@ -20,29 +20,17 @@ Inter:{
 Foundation:{"Foundation":[{id:"f1",name:"Fundamentals of Accounting",short:"FA",chapters:["Accounting Basics","Final Accounts","Bank Reconciliation"]},{id:"f2",name:"Business Laws",short:"Law",chapters:["Contract","Sale of Goods","Company Basics"]}]}
 };
 function getUser(){return JSON.parse(localStorage.getItem("cmaUser")||"null")}
-function saveUser(u){localStorage.setItem("cmaUser",JSON.stringify(u))}
+function saveUser(u){localStorage.setItem("cmaUser",JSON.stringify(u)); if(window.saveCloudUser) window.saveCloudUser(u).catch(console.error)}
 function getProgress(){return JSON.parse(localStorage.getItem("cmaProgress")||"{}")}
-function saveProgress(p){localStorage.setItem("cmaProgress",JSON.stringify(p))}
-function selectedGroups(u){
- if(u.course==="Final") return u.groups.includes("Both Groups")?["Group III","Group IV"]:u.groups;
- if(u.course==="Inter") return u.groups.length?u.groups:["Group I"];
- return ["Foundation"];
-}
-function papersForUser(u){
- const d=CMA_DATA[u.course]||CMA_DATA.Final; let out=[];
- selectedGroups(u).forEach(g=>(d[g]||[]).forEach(p=>out.push({...p,group:g})));
- return out;
-}
-function topicsForPaper(p){
- let arr=[]; p.chapters.forEach((c,ci)=>{for(let i=1;i<=4;i++) arr.push({id:`${p.id}-${ci+1}-${i}`,chapter:c,name:`${c} — Topic ${i}`})});
- return arr;
-}
-function allTopics(u){return papersForUser(u).flatMap(p=>topicsForPaper(p).map(t=>({...t,paperId:p.id,paper:p.name,short:p.short,group:p.group})))}
+function saveProgress(p){localStorage.setItem("cmaProgress",JSON.stringify(p)); if(window.saveCloudData) window.saveCloudData("cmaProgress",p).catch(console.error)}
+function getStore(key, fallback){return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}
+function saveStore(key,value){localStorage.setItem(key,JSON.stringify(value)); if(window.saveCloudData) window.saveCloudData(key,value).catch(console.error)}
+function selectedGroups(u){if(u.course==="Final")return u.groups.includes("Both Groups")?["Group III","Group IV"]:u.groups;if(u.course==="Inter")return u.groups.length?u.groups:["Group I"];return ["Foundation"]}
+function papersForUser(u){const d=CMA_DATA[u.course]||CMA_DATA.Final;let out=[];selectedGroups(u).forEach(g=>(d[g]||[]).forEach(p=>out.push({...p,group:g})));return out}
+function topicsForPaper(p){let arr=[];p.chapters.forEach((c,ci)=>{for(let i=1;i<=4;i++)arr.push({id:`${p.id}-${ci+1}-${i}`,chapter:c,name:`${c} — Topic ${i}`})});return arr}
+function allTopics(u){return papersForUser(u).flatMap(p=>topicsForPaper(p).map(t=>({...t,paperId:p.id,paper:p.name,short:p.short,group:p.group}))) }
 function pct(n,d){return d?Math.round(n/d*100):0}
-function syllabusStats(u){
- const all=allTopics(u), prog=getProgress(); let done=all.filter(t=>prog[t.id]?.status==="completed").length;
- return {done,total:all.length,percent:pct(done,all.length)};
-}
-function paperStats(u,p){let ts=topicsForPaper(p),pr=getProgress();let done=ts.filter(t=>pr[t.id]?.status==="completed").length;return {done,total:ts.length,percent:pct(done,ts.length)}}
-function groupStats(u,g){let ps=papersForUser(u).filter(p=>p.group===g),t=0,d=0;ps.forEach(p=>{let s=paperStats(u,p);t+=s.total;d+=s.done});return {done:d,total:t,percent:pct(d,t)}}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function syllabusStats(u){const all=allTopics(u),prog=getProgress();let done=all.filter(t=>prog[t.id]?.status==="completed").length;return{done,total:all.length,percent:pct(done,all.length)}}
+function paperStats(u,p){let ts=topicsForPaper(p),pr=getProgress();let done=ts.filter(t=>pr[t.id]?.status==="completed").length;return{done,total:ts.length,percent:pct(done,ts.length)}}
+function groupStats(u,g){let ps=papersForUser(u).filter(p=>p.group===g),t=0,d=0;ps.forEach(p=>{let s=paperStats(u,p);t+=s.total;d+=s.done});return{done:d,total:t,percent:pct(d,t)}}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
