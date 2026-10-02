@@ -1,0 +1,17 @@
+let u=getUser(); let step=1; let selectedCourse=u.course||null; let selectedGroups=u.groups||[]; let selectedAttempt=u.attempt||null;
+const steps=[...document.querySelectorAll(".step")];
+function render(){steps.forEach((s,i)=>s.classList.toggle("active",i===step-1));document.getElementById("stepLabel").textContent=`${step} / 5`;document.getElementById("progress").style.width=`${step*20}%`;document.getElementById("back").style.visibility=step===1?"hidden":"visible";document.getElementById("next").textContent=step===5?"Complete Setup ✓":"Next →";if(step===5)renderPapers();}
+function selectButtons(){document.querySelectorAll("[data-course]").forEach(b=>b.onclick=()=>{selectedCourse=b.dataset.course;document.querySelectorAll("[data-course]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");});
+document.querySelectorAll("[data-group]").forEach(b=>b.onclick=()=>{if(b.dataset.group==="Both Groups")selectedGroups=["Both Groups"];else selectedGroups=[b.dataset.group];document.querySelectorAll("[data-group]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");});
+document.querySelectorAll("[data-attempt]").forEach(b=>b.onclick=()=>{selectedAttempt=b.dataset.attempt;document.querySelectorAll("[data-attempt]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");});}
+function renderPapers(){let wrap=document.getElementById("paperProgress");let temp={...u,course:selectedCourse,groups:selectedGroups};wrap.innerHTML=papersForUser(temp).map(p=>`<div class="paper-row"><b>${escapeHtml(p.short)} — ${escapeHtml(p.name)}</b><select data-paper="${p.id}"><option>Not Started</option><option>Classes in Progress</option><option>Classes Completed</option><option>First Revision Done</option></select></div>`).join("");}
+document.getElementById("back").onclick=()=>{if(step>1){step--;render()}};
+document.getElementById("next").onclick=()=>{
+ if(step===1&&!selectedCourse)return alert("Select a CMA course.");
+ if(step===2&&!selectedGroups.length)return alert("Select a group.");
+ if(step===3&&!selectedAttempt)return alert("Select a target attempt.");
+ if(step<5){step++;render();return}
+ u.course=selectedCourse;u.groups=selectedGroups;u.attempt=selectedAttempt;u.dailyHours=+dailyHours.value;u.preferredTime=preferredTime.value;u.weeklyOff=weeklyOff.value;u.setup=true;saveUser(u);
+ let prog=getProgress();document.querySelectorAll("[data-paper]").forEach(s=>{let p=s.dataset.paper; if(s.value!=="Not Started")prog[p+"-setup"]={status:s.value}});saveProgress(prog);location.href="dashboard.html";
+};
+selectButtons();render();
